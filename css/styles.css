@@ -266,6 +266,11 @@ footer {
         gap: 8px;
     }
 
+    .form-group {
+        width: 100%;
+        max-width: 100%;
+    }
+
     .email-input {
         width: 100%;
         text-align: center;
