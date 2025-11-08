@@ -113,10 +113,16 @@ footer {
 
 .email-form {
     display: flex;
-    flex-direction: row;
-    gap: 8px;
+    flex-direction: column;
+    gap: 12px;
     max-width: 565px;
     width: 100%;
+}
+
+.input-row {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
     align-items: flex-start;
 }
 
@@ -296,8 +302,11 @@ footer {
     }
 
     .email-form {
-        flex-direction: column;
         max-width: 353px;
+    }
+
+    .input-row {
+        flex-direction: column;
         gap: 8px;
     }
 

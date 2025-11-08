@@ -48,26 +48,28 @@
         </p>
 
         <form class="email-form" id="emailForm">
-            <div class="form-group">
-                <input
-                    type="email"
-                    class="email-input"
-                    id="emailInput"
-                    placeholder="ENTER EMAIL"
-                    required
-                    autocomplete="email"
-                >
-                <div class="form-message" id="formMessage"></div>
-            </div>
-
             <label class="consent-label">
                 <input type="checkbox" id="consentCheckbox" required class="consent-checkbox">
-                <span class="consent-text">I agree to receive emails about the product launch and accept the <a href="#" class="consent-link">Privacy Policy</a></span>
+                <span class="consent-text">I agree to receive emails about the product launch and accept the <a href="privacy.html" class="consent-link" target="_blank">Privacy Policy</a></span>
             </label>
 
-            <button type="submit" class="submit-button" id="submitButton">
-                SUBSCRIBE
-            </button>
+            <div class="input-row">
+                <div class="form-group">
+                    <input
+                        type="email"
+                        class="email-input"
+                        id="emailInput"
+                        placeholder="ENTER EMAIL"
+                        required
+                        autocomplete="email"
+                    >
+                    <div class="form-message" id="formMessage"></div>
+                </div>
+
+                <button type="submit" class="submit-button" id="submitButton">
+                    SUBSCRIBE
+                </button>
+            </div>
         </form>
     </footer>
 

@@ -1,0 +1,26 @@
+# Analytics viewer (contains API tokens - keep local only)
+stats-viewer.html
+
+# Analytics script (merged into app.js)
+js/analytics.js
+
+# Node modules (if any)
+node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment files
+.env
+.env.local
