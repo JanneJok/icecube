@@ -269,8 +269,8 @@ footer {
     /* Main content positioned in second quarter (25%-50%) */
     main {
         position: fixed;
-        top: 25vh;
-        height: 25vh;
+        top: 24vh;
+        height: 24vh;
         left: 0;
         right: 0;
         flex: none;
