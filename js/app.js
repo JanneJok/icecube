@@ -1,6 +1,6 @@
 /**
  * IceCube - Coming Soon Page
- * Email subscription form handler with Supabase integration
+ * Email subscription form handler with Supabase integration and analytics
  */
 
 // Supabase configuration
@@ -14,11 +14,41 @@ if (SUPABASE_URL && SUPABASE_ANON_KEY) {
     supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 }
 
+// ==========================================
+// Analytics Functions
+// ==========================================
+
+/**
+ * Track an analytics event (anonymous, aggregated stats only)
+ * @param {string} eventType - Type of event: 'page_views', 'email_submissions', 'email_duplicates', 'email_errors'
+ */
+async function trackEvent(eventType) {
+    if (!supabase) return;
+
+    try {
+        await supabase.rpc('increment_stat', {
+            stat_column: eventType,
+            increment_by: 1
+        });
+    } catch (error) {
+        // Silent fail for analytics
+        console.debug('Analytics tracking failed:', error);
+    }
+}
+
+// Track page view on load
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => trackEvent('page_views'));
+} else {
+    trackEvent('page_views');
+}
+
 // Form elements
 const form = document.getElementById('emailForm');
 const emailInput = document.getElementById('emailInput');
 const submitButton = document.getElementById('submitButton');
 const formMessage = document.getElementById('formMessage');
+const consentCheckbox = document.getElementById('consentCheckbox');
 
 /**
  * Validates email format
@@ -66,6 +96,12 @@ async function handleSubmit(e) {
         return;
     }
 
+    // Validate consent
+    if (!consentCheckbox.checked) {
+        showMessage('Please accept the privacy policy to continue', 'error');
+        return;
+    }
+
     // Check if Supabase is configured
     if (!supabase) {
         showMessage('Service not configured. Please contact administrator.', 'error');
@@ -89,22 +125,19 @@ async function handleSubmit(e) {
         if (error) {
             if (error.code === '23505') {
                 showMessage('This email is already subscribed!', 'error');
-                // Track duplicate email attempt
-                if (window.analytics) window.analytics.trackEmailDuplicate();
+                trackEvent('email_duplicates');
             } else {
                 throw error;
             }
         } else {
             showMessage('Thank you! We\'ll notify you when we launch.', 'success');
             emailInput.value = '';
-            // Track successful submission
-            if (window.analytics) window.analytics.trackEmailSubmission();
+            trackEvent('email_submissions');
         }
     } catch (error) {
         console.error('Error submitting email:', error);
         showMessage('Something went wrong. Please try again later.', 'error');
-        // Track error
-        if (window.analytics) window.analytics.trackEmailError();
+        trackEvent('email_errors');
     } finally {
         submitButton.disabled = false;
         submitButton.textContent = 'SUBSCRIBE';

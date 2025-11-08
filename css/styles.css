@@ -214,6 +214,41 @@ footer {
 }
 
 /* ==========================================
+   Consent Checkbox
+   ========================================== */
+.consent-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    cursor: pointer;
+    max-width: 565px;
+    width: 100%;
+}
+
+.consent-checkbox {
+    margin-top: 3px;
+    cursor: pointer;
+    min-width: 16px;
+    min-height: 16px;
+}
+
+.consent-text {
+    font-size: 11px;
+    line-height: 150%;
+    color: #888;
+    text-align: left;
+}
+
+.consent-link {
+    color: #fff;
+    text-decoration: underline;
+}
+
+.consent-link:hover {
+    color: #ccc;
+}
+
+/* ==========================================
    Mobile Responsive (≤768px)
    ========================================== */
 @media (max-width: 768px) {
@@ -278,6 +313,14 @@ footer {
 
     .email-input::placeholder {
         text-align: center;
+    }
+
+    .consent-label {
+        max-width: 353px;
+    }
+
+    .consent-text {
+        font-size: 10px;
     }
 
     .submit-button {
