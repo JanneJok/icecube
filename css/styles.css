@@ -17,6 +17,11 @@
     box-sizing: border-box;
 }
 
+/* Hide mobile-only line breaks on desktop */
+.mobile-only {
+    display: none;
+}
+
 /* Body */
 body {
     font-family: 'Montserrat', sans-serif;
@@ -287,6 +292,11 @@ footer {
     .mobile-break::after {
         content: "\A";
         white-space: pre;
+    }
+
+    /* Show mobile-only line breaks on mobile */
+    .mobile-only {
+        display: inline;
     }
 
     .subtitle {
