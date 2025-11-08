@@ -1,0 +1,315 @@
+/* ==========================================
+   IceCube - Coming Soon Page Styles
+   ========================================== */
+
+/* CSS Variables */
+:root {
+    --bg-primary: #141414;
+    --text-primary: #ffffff;
+    --input-bg: #262626;
+    --button-border: #262626;
+}
+
+/* Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Body */
+body {
+    font-family: 'Montserrat', sans-serif;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* ==========================================
+   Header & Logo
+   ========================================== */
+header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: 85px 20px 20px;
+    display: flex;
+    justify-content: center;
+    z-index: 10;
+}
+
+.logo {
+    width: clamp(120px, 15vw, 200px);
+    height: auto;
+}
+
+.logo-img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* ==========================================
+   Main Content
+   ========================================== */
+main {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.container {
+    max-width: 650px;
+    width: 100%;
+    text-align: center;
+}
+
+h1 {
+    font-size: clamp(32px, 5vw, 60px);
+    font-weight: 600;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    margin-bottom: clamp(20px, 3vh, 42px);
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.subtitle {
+    font-size: clamp(13px, 1.4vw, 16px);
+    font-weight: 400;
+    line-height: 140%;
+    max-width: 415px;
+    margin: 0 auto;
+}
+
+/* ==========================================
+   Footer & Email Form
+   ========================================== */
+footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 20px 20px 85px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    z-index: 10;
+}
+
+.waitlist-text {
+    font-size: clamp(11px, 1vw, 12px);
+    font-weight: 400;
+    line-height: 150%;
+    text-align: center;
+}
+
+.email-form {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    max-width: 565px;
+    width: 100%;
+    align-items: flex-start;
+}
+
+.form-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.email-input {
+    width: 100%;
+    padding: 16px 20px;
+    background-color: var(--input-bg);
+    border: none;
+    border-radius: 10px;
+    color: var(--text-primary);
+    font-family: 'Montserrat', sans-serif;
+    font-size: clamp(12px, 1.2vw, 14px);
+    font-weight: 600;
+    letter-spacing: 0.3em;
+    transition: all 0.3s ease;
+}
+
+.email-input::placeholder {
+    color: var(--text-primary);
+    opacity: 1;
+    text-transform: uppercase;
+}
+
+.email-input:focus {
+    outline: none;
+    background-color: #2d2d2d;
+}
+
+.submit-button {
+    padding: 16px 40px;
+    background-color: transparent;
+    border: 1px solid var(--button-border);
+    border-radius: 10px;
+    color: var(--text-primary);
+    font-family: 'Montserrat', sans-serif;
+    font-size: clamp(12px, 1.2vw, 14px);
+    font-weight: 600;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: clamp(140px, 15vw, 186px);
+}
+
+.submit-button:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: #3d3d3d;
+}
+
+.submit-button:active {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.submit-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ==========================================
+   Form Messages
+   ========================================== */
+.form-message {
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 500;
+    text-align: center;
+    display: none;
+    margin-top: 8px;
+}
+
+.form-message.success {
+    background-color: rgba(78, 92, 82, 0.3);
+    border: 1px solid #4e5c52;
+    color: #c8ccc9;
+    display: block;
+}
+
+.form-message.error {
+    background-color: rgba(130, 15, 26, 0.3);
+    border: 1px solid #820f1a;
+    color: #f9b8bf;
+    display: block;
+}
+
+/* ==========================================
+   Mobile Responsive (≤768px)
+   ========================================== */
+@media (max-width: 768px) {
+    header {
+        padding: 77px 20px 20px;
+    }
+
+    .logo {
+        width: 150px;
+    }
+
+    /* Main content positioned in second quarter (25%-50%) */
+    main {
+        position: fixed;
+        top: 25vh;
+        height: 25vh;
+        left: 0;
+        right: 0;
+        flex: none;
+    }
+
+    h1 {
+        font-size: 50px;
+        letter-spacing: 0.3em;
+        line-height: 61px;
+        margin-bottom: 20px;
+        white-space: normal;
+    }
+
+    .mobile-break::after {
+        content: "\A";
+        white-space: pre;
+    }
+
+    .subtitle {
+        width: calc(100% - 40px);
+        max-width: 415px;
+        font-size: 14px;
+        line-height: 150%;
+        padding-top: 20px;
+    }
+
+    footer {
+        padding: 20px 20px 16px;
+    }
+
+    .email-form {
+        flex-direction: column;
+        max-width: 353px;
+        gap: 8px;
+    }
+
+    .email-input {
+        width: 100%;
+        text-align: center;
+    }
+
+    .email-input::placeholder {
+        text-align: center;
+    }
+
+    .submit-button {
+        width: 100%;
+    }
+}
+
+/* ==========================================
+   Small Mobile (≤480px)
+   ========================================== */
+@media (max-width: 480px) {
+    .logo {
+        width: 120px;
+    }
+
+    .subtitle {
+        font-size: 13px;
+    }
+
+    .waitlist-text {
+        font-size: 12px;
+    }
+
+    .email-input {
+        font-size: 14px;
+        line-height: 140%;
+        letter-spacing: 0.3em;
+        text-align: center;
+    }
+
+    .email-input::placeholder {
+        text-align: center;
+    }
+
+    .submit-button {
+        font-size: 14px;
+        line-height: 140%;
+        letter-spacing: 0.3em;
+    }
+}
