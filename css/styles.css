@@ -269,8 +269,8 @@ footer {
     /* Main content positioned in second quarter (25%-50%) */
     main {
         position: fixed;
-        top: 23vh;
-        height: 23vh;
+        top: 22vh;
+        height: 22vh;
         left: 0;
         right: 0;
         flex: none;
@@ -294,7 +294,7 @@ footer {
         max-width: 415px;
         font-size: 14px;
         line-height: 150%;
-        padding-top: 10px;
+        padding-top: 15px;
     }
 
     footer {
