@@ -14,34 +14,8 @@ if (SUPABASE_URL && SUPABASE_ANON_KEY) {
     supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 }
 
-// ==========================================
-// Analytics Functions
-// ==========================================
-
-/**
- * Track an analytics event (anonymous, aggregated stats only)
- * @param {string} eventType - Type of event: 'page_views', 'email_submissions', 'email_duplicates', 'email_errors'
- */
-async function trackEvent(eventType) {
-    if (!supabase) return;
-
-    try {
-        await supabase.rpc('increment_stat', {
-            stat_column: eventType,
-            increment_by: 1
-        });
-    } catch (error) {
-        // Silent fail for analytics
-        console.debug('Analytics tracking failed:', error);
-    }
-}
-
-// Track page view on load
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => trackEvent('page_views'));
-} else {
-    trackEvent('page_views');
-}
+// Note: Analytics tracking is handled by analytics.js
+// Use window.analytics functions for tracking events
 
 // Form elements
 const form = document.getElementById('emailForm');
@@ -125,19 +99,19 @@ async function handleSubmit(e) {
         if (error) {
             if (error.code === '23505') {
                 showMessage('This email is already subscribed!', 'error');
-                trackEvent('email_duplicates');
+                if (window.analytics) window.analytics.trackEmailDuplicate();
             } else {
                 throw error;
             }
         } else {
             showMessage('Thank you! We\'ll notify you when we launch.', 'success');
             emailInput.value = '';
-            trackEvent('email_submissions');
+            if (window.analytics) window.analytics.trackEmailSubmission();
         }
     } catch (error) {
         console.error('Error submitting email:', error);
         showMessage('Something went wrong. Please try again later.', 'error');
-        trackEvent('email_errors');
+        if (window.analytics) window.analytics.trackEmailError();
     } finally {
         submitButton.disabled = false;
         submitButton.textContent = 'SUBSCRIBE';

@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IceCube - Analytics Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * {
             margin: 0;
@@ -138,6 +140,85 @@
         button:hover {
             background: #e0e0e0;
         }
+
+        .chart-section {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 40px;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .chart-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .time-range-selector {
+            display: flex;
+            gap: 8px;
+            background: #0f0f0f;
+            padding: 4px;
+            border-radius: 6px;
+        }
+
+        .time-range-btn {
+            background: transparent;
+            color: #888;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+            margin: 0;
+            display: inline-block;
+        }
+
+        .time-range-btn:hover {
+            color: #fff;
+            background: #262626;
+        }
+
+        .time-range-btn.active {
+            background: #fff;
+            color: #000;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .chart-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .time-range-selector {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .time-range-btn {
+                flex: 1;
+                padding: 10px 8px;
+                font-size: 12px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -147,6 +228,22 @@
 
         <div id="loading" class="loading">Loading statistics...</div>
         <div id="error" class="error" style="display: none;"></div>
+
+        <!-- Chart Section -->
+        <div id="chartSection" class="chart-section" style="display: none;">
+            <div class="chart-header">
+                <h2 class="chart-title">Page Views Over Time</h2>
+                <div class="time-range-selector">
+                    <button class="time-range-btn active" onclick="changeTimeRange('7d')">7 Days</button>
+                    <button class="time-range-btn" onclick="changeTimeRange('30d')">30 Days</button>
+                    <button class="time-range-btn" onclick="changeTimeRange('90d')">90 Days</button>
+                    <button class="time-range-btn" onclick="changeTimeRange('all')">All Time</button>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="pageViewsChart"></canvas>
+            </div>
+        </div>
 
         <div id="totals" style="display: none;">
             <h2 style="margin-bottom: 20px;">Total Statistics</h2>
@@ -180,18 +277,40 @@
 
     <script>
         const API_URL = 'https://ysuhexvvgjoizrcdrxso.supabase.co/functions/v1/stats-api?token=icecube-stats-secret-2025';
+        const SUPABASE_URL = 'https://ysuhexvvgjoizrcdrxso.supabase.co';
         const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlzdWhleHZ2Z2pvaXpyY2RyeHNvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI2MDQzODksImV4cCI6MjA3ODE4MDM4OX0.0UFYz-xd_QmUEdVcKWqRo6D4QcwvAmlKDKSdu7M4ENA';
+
+        // Initialize Supabase client
+        const supabase = window.supabase.createClient(SUPABASE_URL, ANON_KEY);
+
+        let chartInstance = null;
+        let allData = {};
+        let currentTimeRange = '7d';
+
+        // Track chart interaction
+        async function trackChartInteraction() {
+            try {
+                await supabase.rpc('increment_stat', {
+                    stat_column: 'chart_interactions',
+                    increment_by: 1
+                });
+            } catch (error) {
+                console.debug('Chart interaction tracking failed:', error);
+            }
+        }
 
         async function loadStats() {
             const loading = document.getElementById('loading');
             const error = document.getElementById('error');
             const totals = document.getElementById('totals');
             const dailyStats = document.getElementById('dailyStats');
+            const chartSection = document.getElementById('chartSection');
 
             loading.style.display = 'block';
             error.style.display = 'none';
             totals.style.display = 'none';
             dailyStats.style.display = 'none';
+            chartSection.style.display = 'none';
 
             try {
                 const response = await fetch(API_URL, {
@@ -205,6 +324,9 @@
                 }
 
                 const data = await response.json();
+
+                // Store all data globally
+                allData = data;
 
                 // Calculate totals
                 let totalPageViews = 0;
@@ -264,7 +386,11 @@
                     });
                 }
 
+                // Render chart
+                renderChart(currentTimeRange);
+
                 loading.style.display = 'none';
+                chartSection.style.display = 'block';
                 totals.style.display = 'block';
                 dailyStats.style.display = 'block';
 
@@ -289,6 +415,142 @@
             if (dateOnly === todayOnly) return '📅 Today - ' + dateStr;
             if (dateOnly === yesterdayOnly) return '📅 Yesterday - ' + dateStr;
             return '📅 ' + dateStr;
+        }
+
+        function filterDataByTimeRange(data, range) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            let daysBack = Infinity;
+            if (range === '7d') daysBack = 7;
+            else if (range === '30d') daysBack = 30;
+            else if (range === '90d') daysBack = 90;
+
+            const dates = Object.keys(data).sort();
+            const filtered = {};
+
+            dates.forEach(dateStr => {
+                const date = new Date(dateStr + 'T00:00:00');
+                const diffTime = today - date;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                if (diffDays <= daysBack) {
+                    filtered[dateStr] = data[dateStr];
+                }
+            });
+
+            return filtered;
+        }
+
+        function renderChart(timeRange) {
+            const filteredData = filterDataByTimeRange(allData, timeRange);
+            const dates = Object.keys(filteredData).sort();
+
+            // Prepare chart data
+            const labels = dates.map(date => {
+                const d = new Date(date + 'T00:00:00');
+                return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            });
+
+            const pageViews = dates.map(date => filteredData[date].pageViews || 0);
+
+            // Destroy existing chart
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
+            // Create new chart
+            const ctx = document.getElementById('pageViewsChart').getContext('2d');
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Page Views',
+                        data: pageViews,
+                        borderColor: '#fff',
+                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        pointBackgroundColor: '#fff',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: '#1a1a1a',
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            borderColor: '#333',
+                            borderWidth: 1,
+                            padding: 12,
+                            displayColors: false,
+                            callbacks: {
+                                title: function(context) {
+                                    return dates[context[0].dataIndex];
+                                },
+                                label: function(context) {
+                                    return 'Page Views: ' + context.parsed.y;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: '#888',
+                                precision: 0
+                            },
+                            grid: {
+                                color: '#262626',
+                                drawBorder: false
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: '#888',
+                                maxRotation: 45,
+                                minRotation: 0
+                            },
+                            grid: {
+                                color: '#262626',
+                                drawBorder: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function changeTimeRange(range) {
+            currentTimeRange = range;
+
+            // Track chart interaction
+            trackChartInteraction();
+
+            // Update button states
+            document.querySelectorAll('.time-range-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Re-render chart with new range
+            renderChart(range);
         }
 
         // Load stats on page load

@@ -16,7 +16,7 @@ if (ANALYTICS_SUPABASE_URL && ANALYTICS_SUPABASE_ANON_KEY && window.supabase) {
 
 /**
  * Track an analytics event
- * @param {string} eventType - Type of event: 'page_views', 'email_submissions', 'email_duplicates', 'email_errors'
+ * @param {string} eventType - Type of event: 'page_views', 'email_submissions', 'email_duplicates', 'email_errors', 'contact_submissions'
  */
 async function trackEvent(eventType) {
     if (!analyticsClient) {
@@ -40,10 +40,60 @@ async function trackEvent(eventType) {
 }
 
 /**
+ * Get referrer information
+ * @returns {string} - Referrer URL or 'direct'
+ */
+function getReferrer() {
+    if (document.referrer && document.referrer !== '') {
+        try {
+            const referrerUrl = new URL(document.referrer);
+            const currentUrl = new URL(window.location.href);
+
+            // Check if referrer is from different domain
+            if (referrerUrl.hostname !== currentUrl.hostname) {
+                return referrerUrl.hostname;
+            }
+        } catch (e) {
+            console.debug('Error parsing referrer:', e);
+        }
+    }
+    return 'direct';
+}
+
+/**
+ * Track referrer
+ */
+async function trackReferrer() {
+    if (!analyticsClient) {
+        console.warn('Analytics client not initialized');
+        return;
+    }
+
+    const referrer = getReferrer();
+
+    try {
+        // Insert referrer data
+        const { error } = await analyticsClient
+            .from('referrers')
+            .insert([{
+                referrer: referrer,
+                page_url: window.location.pathname
+            }]);
+
+        if (error && error.code !== '23505') { // Ignore duplicate errors
+            console.debug('Referrer tracking error:', error);
+        }
+    } catch (error) {
+        console.debug('Referrer tracking failed:', error);
+    }
+}
+
+/**
  * Track page view on load
  */
 function trackPageView() {
     trackEvent('page_views');
+    trackReferrer(); // Also track referrer on page view
 }
 
 /**
@@ -67,17 +117,27 @@ function trackEmailError() {
     trackEvent('email_errors');
 }
 
-// Auto-track page view when script loads
+/**
+ * Track contact form submission
+ */
+function trackContactSubmission() {
+    trackEvent('contact_submissions');
+}
+
+// Auto-track page view and referrer when script loads
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', trackPageView);
 } else {
     trackPageView();
 }
 
-// Export functions for use in app.js
+// Export functions for use in other scripts
 window.analytics = {
     trackPageView,
     trackEmailSubmission,
     trackEmailDuplicate,
-    trackEmailError
+    trackEmailError,
+    trackContactSubmission,
+    trackEvent,
+    trackReferrer
 };
