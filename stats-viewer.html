@@ -253,18 +253,16 @@
                     <div class="stat-value" id="totalPageViews">0</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">Email Submissions</div>
-                    <div class="stat-value" id="totalSubmissions">0</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Duplicate Attempts</div>
-                    <div class="stat-value" id="totalDuplicates">0</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Errors</div>
-                    <div class="stat-value" id="totalErrors">0</div>
+                    <div class="stat-label">Contact Submissions</div>
+                    <div class="stat-value" id="totalContacts">0</div>
                 </div>
             </div>
+        </div>
+
+        <!-- Referrer Breakdown -->
+        <div id="referrerSection" style="display: none; margin-top: 40px;">
+            <h2 style="margin-bottom: 20px;">Referrer Breakdown</h2>
+            <div class="stats-grid" id="referrerGrid"></div>
         </div>
 
         <div id="dailyStats" class="daily-stats" style="display: none;">
@@ -305,12 +303,14 @@
             const totals = document.getElementById('totals');
             const dailyStats = document.getElementById('dailyStats');
             const chartSection = document.getElementById('chartSection');
+            const referrerSection = document.getElementById('referrerSection');
 
             loading.style.display = 'block';
             error.style.display = 'none';
             totals.style.display = 'none';
             dailyStats.style.display = 'none';
             chartSection.style.display = 'none';
+            referrerSection.style.display = 'none';
 
             try {
                 const response = await fetch(API_URL, {
@@ -328,27 +328,58 @@
                 // Store all data globally
                 allData = data;
 
-                // Calculate totals
+                // Fetch analytics data
+                const { data: analyticsData, error: analyticsError } = await supabase
+                    .from('analytics')
+                    .select('*')
+                    .eq('id', 1)
+                    .single();
+
+                // Fetch referrer data
+                const { data: referrerData, error: referrerError } = await supabase
+                    .from('referrers')
+                    .select('referrer, created_at');
+
+                // Calculate page views from daily data
                 let totalPageViews = 0;
-                let totalSubmissions = 0;
-                let totalDuplicates = 0;
-                let totalErrors = 0;
-
                 const dates = Object.keys(data).sort().reverse();
-
                 dates.forEach(date => {
                     const day = data[date];
                     totalPageViews += day.pageViews || 0;
-                    totalSubmissions += day.emailSubmissions || 0;
-                    totalDuplicates += day.emailDuplicates || 0;
-                    totalErrors += day.emailErrors || 0;
                 });
 
                 // Update totals
                 document.getElementById('totalPageViews').textContent = totalPageViews;
-                document.getElementById('totalSubmissions').textContent = totalSubmissions;
-                document.getElementById('totalDuplicates').textContent = totalDuplicates;
-                document.getElementById('totalErrors').textContent = totalErrors;
+                document.getElementById('totalContacts').textContent = analyticsData?.contact_submissions || 0;
+
+                // Process referrer data
+                if (referrerData && !referrerError) {
+                    const referrerCounts = {};
+                    referrerData.forEach(item => {
+                        const ref = item.referrer || 'direct';
+                        referrerCounts[ref] = (referrerCounts[ref] || 0) + 1;
+                    });
+
+                    // Sort by count
+                    const sortedReferrers = Object.entries(referrerCounts)
+                        .sort((a, b) => b[1] - a[1]);
+
+                    // Render referrer cards
+                    const referrerGrid = document.getElementById('referrerGrid');
+                    referrerGrid.innerHTML = '';
+
+                    sortedReferrers.forEach(([referrer, count]) => {
+                        const card = document.createElement('div');
+                        card.className = 'stat-card';
+                        card.innerHTML = `
+                            <div class="stat-label">${referrer}</div>
+                            <div class="stat-value">${count}</div>
+                        `;
+                        referrerGrid.appendChild(card);
+                    });
+
+                    referrerSection.style.display = 'block';
+                }
 
                 // Render daily stats
                 const dailyContainer = document.getElementById('dailyContainer');
@@ -357,10 +388,32 @@
                 if (dates.length === 0) {
                     dailyContainer.innerHTML = '<p style="color: #666; text-align: center; padding: 40px;">No data yet. Visit your site to start collecting analytics!</p>';
                 } else {
+                    // Get daily referrers
+                    const dailyReferrers = {};
+                    if (referrerData && !referrerError) {
+                        referrerData.forEach(item => {
+                            const date = new Date(item.created_at).toISOString().split('T')[0];
+                            if (!dailyReferrers[date]) dailyReferrers[date] = {};
+                            const ref = item.referrer || 'direct';
+                            dailyReferrers[date][ref] = (dailyReferrers[date][ref] || 0) + 1;
+                        });
+                    }
+
                     dates.forEach(date => {
                         const day = data[date];
                         const card = document.createElement('div');
                         card.className = 'day-card';
+
+                        let referrersHtml = '';
+                        if (dailyReferrers[date]) {
+                            const topReferrers = Object.entries(dailyReferrers[date])
+                                .sort((a, b) => b[1] - a[1])
+                                .slice(0, 5)
+                                .map(([ref, count]) => `<span class="referrer-tag" style="display: inline-block; background: #262626; padding: 4px 8px; border-radius: 4px; margin: 2px; font-size: 11px;">${ref}: ${count}</span>`)
+                                .join('');
+                            referrersHtml = `<div style="margin-top: 12px;"><div style="color: #888; font-size: 12px; margin-bottom: 6px;">Referrers:</div>${topReferrers}</div>`;
+                        }
+
                         card.innerHTML = `
                             <div class="day-header">${formatDate(date)}</div>
                             <div class="day-stats">
@@ -368,19 +421,8 @@
                                     <div class="day-stat-label">Page Views</div>
                                     <div class="day-stat-value">${day.pageViews || 0}</div>
                                 </div>
-                                <div class="day-stat">
-                                    <div class="day-stat-label">Submissions</div>
-                                    <div class="day-stat-value">${day.emailSubmissions || 0}</div>
-                                </div>
-                                <div class="day-stat">
-                                    <div class="day-stat-label">Duplicates</div>
-                                    <div class="day-stat-value">${day.emailDuplicates || 0}</div>
-                                </div>
-                                <div class="day-stat">
-                                    <div class="day-stat-label">Errors</div>
-                                    <div class="day-stat-value">${day.emailErrors || 0}</div>
-                                </div>
                             </div>
+                            ${referrersHtml}
                         `;
                         dailyContainer.appendChild(card);
                     });
